@@ -201,6 +201,13 @@ func NewQueue(baseUrl string) (*Queue, error) {
 	}
 	if found.Len() == 0 {
 		q.AddToQueue(baseUrl)
+	} else if found.Len() > parsed.Len() {
+		toQueue := found.Diff(parsed)
+		q.Queue = make(chan string, len(toQueue))
+		for i := range toQueue {
+			q.Queue <- toQueue[i]
+			fmt.Printf("add to queue: '%s'\n", toQueue[i])
+		}
 	}
 	return q, nil
 }
@@ -295,6 +302,16 @@ func (c *UrlList) Store(key string) error {
 		return err
 	}
 	return nil
+}
+
+func (c *UrlList) Diff(l *UrlList) []string {
+	res := make([]string, 0, c.Len()-l.Len())
+	for key := range c.m {
+		if _, exists := l.m[key]; !exists {
+			res = append(res, key)
+		}
+	}
+	return res
 }
 
 func (c *UrlList) Close() error {
