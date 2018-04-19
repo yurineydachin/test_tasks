@@ -6,12 +6,12 @@ class Pack
         @price = price
     end
 
-    def getCapacity
-        return @capacity
+    def capacity
+        @capacity
     end
 
-    def getPrice
-        return @price
+    def price
+        @price
     end
 end
 
@@ -19,7 +19,7 @@ class Product
     def initialize(code, name, packs)
         @code = code
         @name = name
-        if !packs.kind_of?(Array)
+        if !packs.is_a? Array
             puts "Need array of Pack #{packs}"
             return
         end
@@ -27,34 +27,112 @@ class Product
         @packs = {}
         packs.each do |pack|
             if pack.is_a? Pack
-                @packs[pack.getCapacity()] = pack
+                @packs[pack.capacity] = pack
             else
                 puts "Need Pack, but given #{pack}"
             end
         end
     end
 
-    def getCode
-        return @code
+    def code
+        @code
     end
 
-    def getName
-        return @name
+    def name
+        @name
     end
 
-    def getPacks
-        return @packs
+    def packs
+        @packs
     end
 
-    def getPacksCount
-        return @packs.keys.sort_by{|v| -v}
+    def packsCapacity
+        @packs.keys.sort_by{|v| -v}
+    end
+end
+
+class Order
+    def initialize()
+        @items = []
+    end
+
+    def addItem(product, count)
+        if !product.is_a? Product
+            puts "Need product for Order.addItem, but given: #{product}"
+            return
+        end
+        if !count.is_a? Integer
+            puts "Need count as integer for Order.addItem, but given: #{count}"
+            return
+        end
+
+        @items << OrderItem.new(product, count)
+    end
+
+    def items
+        @items
+    end
+
+    def to_s
+        res = ""
+        @items.each do |orderItem|
+            res += orderItem.to_s
+        end
+        res
+    end
+end
+
+class OrderItem
+    def initialize(product, count)
+        if !product.is_a? Product
+            puts "Need product for OrderItem, but given: #{product}"
+            return
+        end
+        if !count.is_a? Integer
+            puts "Need count as integer for OrderItem, but given: #{count}"
+            return
+        end
+        @product = product
+        @count = count
+        @packHash = {}
+
+        packHash = findPacksAndCount(count, @product.packsCapacity)
+        if !packHash.is_a? Hash
+            puts "Need hash of packs {packCapacity => count} for OrderItem, but given: #{packHash}"
+            return
+        end
+
+        packs = @product.packs
+        packHash.each do |packCapacity, count|
+            if packs[packCapacity].nil?
+                puts "Wrong packCapacity #{packCapacity}, for product #{product.code}"
+            else
+                @packHash[packs[packCapacity]] = count
+            end
+        end
+    end
+
+    def totalPrice
+        res = 0.0
+        @packHash.each do |pack, count|
+            res += pack.price * count
+        end
+        res
+    end
+
+    def to_s
+        res = sprintf("%d %s $%0.2f\n", @count, @product.code, self.totalPrice)
+        @packHash.each do |pack, count|
+            res += sprintf("    %d x %d $%0.2f\n", count, pack.capacity, pack.price)
+        end
+        res
     end
 end
 
 class BakeryComposer
 
     def initialize(products)
-        if !products.kind_of?(Array)
+        if !products.is_a? Array
             puts "Need array of Product #{products}"
             return
         end
@@ -62,51 +140,34 @@ class BakeryComposer
         @products = {}
         products.each do |product|
             if product.is_a? Product
-                @products[product.getCode()] = product
+                @products[product.code] = product
             else
                 puts "Need Product, but given #{product}"
             end
         end
     end
 
-    def calculate(order)
-        res = {}
-        if !order.kind_of?(Hash)
-            puts "Need hash of code: count #{order}"
-            return res
+    def calculateOrder(basket)
+        order = Order.new
+        if !basket.is_a? Hash
+            puts "Need hash of {code => count, ...} #{basket}"
+            return order
         end
 
-        puts "Products #{@products}"
-
-        order.each do |code, count|
+        basket.each do |code, count|
             p = @products[code]
             if p.nil?
                 puts "Product with code #{code} not found"
             else
-                res[p] = findPacks(count, p)
+                order.addItem(p, count)
             end
         end
-        return res
-    end
-
-    private
-    def findPacks(count, product)
-        hash = findPacksAndCount(count, product.getPacksCount())
-        packs = product.getPacks()
-        res = {}
-        hash.each do |pack, count|
-            if packs[pack].nil?
-                puts "Wrong package #{pack}, for product #{product.getCode()}"
-            else
-                res[packs[pack]] = count
-            end
-        end
-        return res
+        order
     end
 end
 
 def findPacksAndCount(basis, packs)
-    if !packs.kind_of?(Array)
+    if !packs.is_a? Array
         return nil
     end
 
@@ -150,5 +211,5 @@ if __FILE__ == $0
         ]),
     ])
 
-    puts bakery.calculate({"VS5": 10, "MB11": 14, "CF": 13})
+    puts bakery.calculateOrder({"VS5" => 10, "MB11" => 14, "CF" => 13})
 end
