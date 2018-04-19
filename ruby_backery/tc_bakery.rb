@@ -1,4 +1,4 @@
-require_relative "run"
+require_relative "bakery"
 require "test/unit"
  
 class TestBakery < Test::Unit::TestCase
