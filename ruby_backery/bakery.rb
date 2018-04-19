@@ -2,6 +2,8 @@
 
 class Pack
     def initialize(capacity, price)
+        raise unless capacity.is_a? Integer
+        raise unless price.is_a? Numeric
         @capacity = capacity
         @price = price
     end
@@ -17,12 +19,12 @@ end
 
 class Product
     def initialize(code, name, packs)
+        raise unless code.is_a? String
+        raise unless name.is_a? String
+        raise unless packs.is_a? Array
+        raise unless packs.length > 0
         @code = code
         @name = name
-        if !packs.is_a? Array
-            puts "Need array of Pack #{packs}"
-            return
-        end
 
         @packs = {}
         packs.each do |pack|
@@ -57,14 +59,8 @@ class Order
     end
 
     def addItem(product, count)
-        if !product.is_a? Product
-            puts "Need product for Order.addItem, but given: #{product}"
-            return
-        end
-        if !count.is_a? Integer
-            puts "Need count as integer for Order.addItem, but given: #{count}"
-            return
-        end
+        raise unless product.is_a? Product
+        raise unless count.is_a? Integer
 
         @items << OrderItem.new(product, count)
     end
@@ -84,21 +80,14 @@ end
 
 class OrderItem
     def initialize(product, count)
-        if !product.is_a? Product
-            puts "Need product for OrderItem, but given: #{product}"
-            return
-        end
-        if !count.is_a? Integer
-            puts "Need count as integer for OrderItem, but given: #{count}"
-            return
-        end
+        raise unless product.is_a? Product
+        raise unless count.is_a? Integer
         @product = product
         @count = count
         @packHash = {}
 
         packHash = findPacksAndCount(count, @product.packsCapacity)
         if !packHash.is_a? Hash
-            puts "Need hash of packs {packCapacity => count} for OrderItem, but given: #{packHash}"
             return
         end
 
@@ -110,6 +99,14 @@ class OrderItem
                 @packHash[packs[packCapacity]] = count
             end
         end
+    end
+
+    def count
+        @count
+    end
+
+    def packHash
+        @packHash
     end
 
     def totalPrice
@@ -132,10 +129,7 @@ end
 class BakeryComposer
 
     def initialize(products)
-        if !products.is_a? Array
-            puts "Need array of Product #{products}"
-            return
-        end
+        raise unless products.is_a? Array
 
         @products = {}
         products.each do |product|
@@ -167,9 +161,7 @@ class BakeryComposer
 end
 
 def findPacksAndCount(basis, packs)
-    if !packs.is_a? Array
-        return nil
-    end
+    raise unless packs.is_a? Array
 
     first = packs.shift
     if basis == 0 || basis % first == 0
