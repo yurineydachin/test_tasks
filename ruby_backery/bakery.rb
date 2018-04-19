@@ -142,12 +142,9 @@ class BakeryComposer
     end
 
     def calculateOrder(basket)
-        order = Order.new
-        if !basket.is_a? Hash
-            puts "Need hash of {code => count, ...} #{basket}"
-            return order
-        end
+        raise unless basket.is_a? Hash
 
+        order = Order.new
         basket.each do |code, count|
             p = @products[code]
             if p.nil?
