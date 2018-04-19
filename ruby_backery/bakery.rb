@@ -87,9 +87,7 @@ class OrderItem
         @packHash = {}
 
         packHash = findPacksAndCount(count, @product.packsCapacity)
-        if !packHash.is_a? Hash
-            return
-        end
+        return if !packHash.is_a? Hash
 
         packs = @product.packs
         packHash.each do |packCapacity, count|
@@ -127,7 +125,6 @@ class OrderItem
 end
 
 class BakeryComposer
-
     def initialize(products)
         raise unless products.is_a? Array
 
@@ -161,19 +158,14 @@ def findPacksAndCount(basis, packs)
     raise unless packs.is_a? Array
 
     first = packs.shift
-    if basis == 0 || basis % first == 0
-        return {first => basis / first}
-    end
-    
-    if packs.length == 0
-        return nil
-    end
+    return {first => basis / first} if basis == 0 || basis % first == 0
+    return nil if packs.length == 0
 
-    (basis / first).step(0, -1) do |n|
-        child = findPacksAndCount(basis - n * first, packs.clone)
+    (basis / first).step(0, -1) do |count|
+        child = findPacksAndCount(basis - count * first, packs.clone)
         if !child.nil?
-            if n > 0
-                return {first => n}.merge(child)
+            if count > 0
+                return {first => count}.merge(child)
             else
                 return child
             end
